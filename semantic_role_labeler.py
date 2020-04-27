@@ -105,7 +105,7 @@ def main():
     # get preWeights
     preWeights = GetEmbedding(wordDict)
     # train model.
-    MODEL_TRAIN = 1
+    MODEL_TRAIN = True
     if MODEL_TRAIN:
         model = TrainRNN(dTrain, lTrain, dValid, lValid, preWeights)
     else:
