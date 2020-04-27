@@ -10,30 +10,35 @@
         |---synt.cha                            # synt.cha : PoS tags and full parses of Charniak.
         |---words                               # words : words.
       -data
-        |---test-set.txt
-        |---train-set.txt
+        |---test-set.txt                        # get from .sh file.
+        |---train-set.txt                       # get from .sh file.
       -temp
+        |---GoogleNews-vectors-negative300.bin  # embedding file.
+      -models
+        |---model.pth                           # best model we get.
+      -outputs
+        |---outputs.txt                         # model outputs.
+        |---test_outputs.txt                    # outputs that satisfies HW requirement.
       -make-testset.sh                          # run with bash to get test set.
       -make-trainset.sh                         # run with bash to get train set.
+      -senmantic_role_labeler.txt               # log file.
       -srl-eval.pl
-      -semantic_role_labeler.py
+
   Command to run:
       python semantic_role_labeler.py
   Description:
       Build and train a recurrent neural network (RNN) with hidden vector size 256.
       Loss function: Adam loss.
-      Embedding vector: 128-dimensional.
+      Embedding vector: 300-dimensional.
       Learning rate: 0.0001.
-      Batch size: 256
+      Batch size: 16
 '''
 
+# dependencies
 import sys
-import re
 import os
-import math
 import random
 import pandas as pd
-from collections import defaultdict
 from gensim import models
 import numpy as np
 import torch.optim as optim
@@ -57,16 +62,16 @@ BatchSize = 16
 LearningRate = 0.0001
 ExtraDims = 3
 NumLabels = 39
-
+# print setting.
 pd.options.display.max_columns = None
 pd.options.display.max_rows = None
-#np.set_printoptions(threshold=np.inf)
+np.set_printoptions(threshold=np.inf)
 
 # Logger: redirect the stream on screen and to file.
 class Logger(object):
     def __init__(self, filename = "log.txt"):
         self.terminal = sys.stdout
-        self.log = open(filename, "a")
+        self.log = open(filename, "w")
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
@@ -75,12 +80,12 @@ class Logger(object):
 
 def main():
     # initialize the log file.
-    #sys.stdout = Logger('semantic_role_labeler.txt')
+    sys.stdout = Logger('semantic_role_labeler.txt')
     print("-- AIT726 Homework 4 from Julia Jeng, Shu Wang, and Arman Anwar --")
     # read data from files.
     # [0/WORD, 1/POS, 2/FULL_SYNT, 3/NE, 4/TARGETS, (5/PROP)....]
-    trainSents = ReadData('Train')
-    testSents = ReadData('Test')
+    trainSents, _ = ReadData('Train')
+    testSents, _ = ReadData('Test')
     # get vocabulary and dictionary.
     wordDict, posDict, neDict, propsDict, maxLen = GetVocab(trainSents, testSents)
     # pad the data.
@@ -100,8 +105,8 @@ def main():
     # get preWeights
     preWeights = GetEmbedding(wordDict)
     # train model.
-    TRAIN = 0
-    if TRAIN:
+    MODEL_TRAIN = 1
+    if MODEL_TRAIN:
         model = TrainRNN(dTrain, lTrain, dValid, lValid, preWeights)
     else:
         preWeights = torch.from_numpy(preWeights)
@@ -110,14 +115,31 @@ def main():
     # test model.
     TestRNN(model, dTest, lTest, wordDict, propsDict)
     # output the format.
-    OutputEval(model, 'Test', wordDict, posDict, neDict, propsDict)
-    return
+    OutputEval(model, 'Test', wordDict, posDict, neDict, propsDict, maxLen)
+    return model
 
 def ReadData(dataset):
+    '''
+    Read data from file and get pre-process contents and targets.
+    :param dataset: indicates 'train' or 'test' dataset.
+    :return: sentences - preprocess variables.
+             targets - original targets.
+    '''
 
     def PreProc(sentence):
+        '''
+        Pre-process each sentence.
+        :param sentence: input sentence. numWords * dims.
+        :return: sentence - preprocessed sentence.
+        '''
         # relabel NE and PROPS.
         def ReLabel(sentence, k):
+            '''
+            Relabel props and ne
+            :param sentence: input sentence. numWords * dims.
+            :param k: process k-column.
+            :return: sentence - preprocessed sentence.
+            '''
             mark = [0, '']
             #for word in sentence:
             for word in sentence:
@@ -135,6 +157,12 @@ def ReadData(dataset):
 
         # delabel NE and PROPS.
         def DeLabel(sentence, k):
+            '''
+            Delabel props and ne, invert from Relabel.
+            :param sentence: input sentence. numWords * dims.
+            :param k: process k-column.
+            :return: sentence - preprocessed sentence.
+            '''
             # get mark.
             mark = np.zeros(numWords+1)
             for i in range(1, numWords):
@@ -178,9 +206,12 @@ def ReadData(dataset):
         return
 
     # check if there is a cache file.
-    if os.path.exists(tempPath + '/' + dataset.lower() + 'Sentences.npy'):
+    if os.path.exists(tempPath + '/' + dataset.lower() + 'Sentences.npy')\
+            and os.path.exists(tempPath + '/' + dataset.lower() + 'Targets.npy'):
         print('[Info] Load ' + dataset.lower() + ' data from ' + tempPath + '/' + dataset.lower() + 'Sentences.npy')
-        return np.load(tempPath + '/' + dataset.lower() + 'Sentences.npy', allow_pickle=True)
+        sentences = np.load(tempPath + '/' + dataset.lower() + 'Sentences.npy', allow_pickle=True)
+        targets = np.load(tempPath + '/' + dataset.lower() + 'Targets.npy', allow_pickle=True)
+        return sentences, targets
 
     # file name.
     filename = dataPath + '/' + dataset.lower() + '-set.txt'
@@ -206,6 +237,15 @@ def ReadData(dataset):
     # df = pd.DataFrame(sentence)
     # print(df)
 
+    # output targets.
+    targets = []
+    for sentence in sentences:
+        target = []
+        for word in sentence:
+            target.append([word[4]])
+        targets.append(target)
+    #print(targets)
+
     # for each sentence.
     for sentence in sentences: # [0/WORD, 1/POS, 2/FULL_SYNT, 3/NE, 4/TARGETS, 5/PROP....]
         PreProc(sentence)
@@ -217,16 +257,28 @@ def ReadData(dataset):
     if not os.path.exists(tempPath):
         os.mkdir(tempPath)
     np.save(tempPath + '/' + dataset.lower() + 'Sentences.npy', sentences)
+    np.save(tempPath + '/' + dataset.lower() + 'Targets.npy', targets)
 
-    return sentences
+    return sentences, targets
 
 def GetVocab(trainSents, testSents):
+    '''
+    Get vocabulary from training and testing set.
+    :param trainSents: training set.
+    :param testSents: testing set.
+    :return: wordDict - word dictionary
+             posDict - POS dictionary
+             neDict - NE dictionary
+             propsDict - PROPS dictionary
+             maxLen - max sentence length
+    '''
     # combine train and test set.
     words = []
     words.extend([word for sent in trainSents for word in sent])
     words.extend([word for sent in testSents for word in sent])
 
     # [0/WORD, 1/POS, 2/FULL_SYNT, 3/NE, 4/TARGETS, 5/PROP....]
+    # WORD
     if os.path.exists(tempPath + '/wordVocab.npy'):
         wordVocab = np.load(tempPath + '/wordVocab.npy', allow_pickle=True)
     else:
@@ -237,6 +289,7 @@ def GetVocab(trainSents, testSents):
         np.save(tempPath + '/wordVocab.npy', wordVocab)
     print('[Info] Get %d vocabulary WORD successfully.' % (len(wordVocab)))
 
+    # POS
     if os.path.exists(tempPath + '/posVocab.npy'):
         posVocab = np.load(tempPath + '/posVocab.npy', allow_pickle=True)
     else:
@@ -247,6 +300,7 @@ def GetVocab(trainSents, testSents):
         np.save(tempPath + '/posVocab.npy', posVocab)
     print('[Info] Get %d vocabulary POS successfully.' % (len(posVocab)))
 
+    # FULL_SYNT
     if os.path.exists(tempPath + '/syntVocab.npy'):
         syntVocab = np.load(tempPath + '/syntVocab.npy', allow_pickle=True)
     else:
@@ -257,6 +311,7 @@ def GetVocab(trainSents, testSents):
         np.save(tempPath + '/syntVocab.npy', syntVocab)
     print('[Info] Get %d vocabulary FULL_SYNT successfully.' % (len(syntVocab)))
 
+    # NE
     if os.path.exists(tempPath + '/neVocab.npy'):
         neVocab = np.load(tempPath + '/neVocab.npy', allow_pickle=True)
     else:
@@ -267,6 +322,7 @@ def GetVocab(trainSents, testSents):
         np.save(tempPath + '/neVocab.npy', neVocab)
     print('[Info] Get %d vocabulary NE successfully.' % (len(neVocab)))
 
+    # PROP
     if os.path.exists(tempPath + '/propsVocab.npy'):
         propsVocab = np.load(tempPath + '/propsVocab.npy', allow_pickle=True)
     else:
@@ -293,6 +349,12 @@ def GetVocab(trainSents, testSents):
     return wordDict, posDict, neDict, propsDict, maxLen
 
 def PadData(sentences, maxLen):
+    '''
+    For each sentence, pad it to the max sentence length.
+    :param sentences: the list of sentences.
+    :param maxLen: max sentence length.
+    :return: processed sentences.
+    '''
     for sentence in sentences:
         dims = len(sentence[0])
         pads = ['<pad>', '<pad>', '<pad>', '<pad>', 0]
@@ -303,6 +365,12 @@ def PadData(sentences, maxLen):
     return sentences
 
 def SplitData(trainSents):
+    '''
+    Split the training set into training and valid set.
+    :param trainSents: original training set.
+    :return: train - splited training set.
+             valid - splited valid set.
+    '''
     # train/valid
     splitRate = 0.8
     numSents = len(trainSents)
@@ -316,6 +384,15 @@ def SplitData(trainSents):
     return train, valid
 
 def GetMapping(sentences, wordDict, posDict, neDict, propsDict):
+    '''
+    Mapping the sentences from string to index-form.
+    :param sentences: list of sentences.
+    :param wordDict: word dictionary.
+    :param posDict: POS dictionary.
+    :param neDict: NE dictionary.
+    :param propsDict: PROP dictionary.
+    :return: index-formed sentences.
+    '''
     newSents = []
     for sentence in sentences:
         # print(sentence)
@@ -337,6 +414,12 @@ def GetMapping(sentences, wordDict, posDict, neDict, propsDict):
     return newSents
 
 def GetDataset(sentsIndex):
+    '''
+    Convert the index-form data to pytorch acceptable form, and divide original data to data and label.
+    :param sentsIndex: index-form data.
+    :return: dataset - numpy dataset.
+             label - numpy label.
+    '''
     dataset = []
     labels = []
     # for each sentence.
@@ -447,6 +530,17 @@ class LongShortTermMemoryNetworks(nn.Module):
         return a
 
 def TrainRNN(dTrain, lTrain, dValid, lValid, preWeights, batchsize=BatchSize, learnRate=LearningRate):
+    '''
+    train the model.
+    :param dTrain: train data.
+    :param lTrain: train label.
+    :param dValid: valid data.
+    :param lValid: valid label.
+    :param preWeights: pre-trained weights.
+    :param batchsize: batch size.
+    :param learnRate: learning rate.
+    :return: trained model
+    '''
     # tensor data processing.
     xTrain = torch.from_numpy(dTrain).long().cuda()
     yTrain = torch.from_numpy(lTrain).long().cuda()
@@ -548,6 +642,15 @@ def TrainRNN(dTrain, lTrain, dValid, lValid, preWeights, batchsize=BatchSize, le
     return model
 
 def TestRNN(model, dTest, lTest, wordDict, classDict):
+    '''
+    run the model on test set and get the accuracy.
+    :param model: trained model.
+    :param dTest: test data.
+    :param lTest: test label.
+    :param wordDict: word dictionary
+    :param classDict: props dictionary.
+    :return: accuracy - the testing accuracy.
+    '''
     # test period
     xTest = torch.from_numpy(dTest).long().cuda()
     yTest = torch.from_numpy(lTest).long().cuda()
@@ -595,7 +698,7 @@ def TestRNN(model, dTest, lTest, wordDict, classDict):
     # file operation.
     if not os.path.exists(outsPath):
         os.mkdir(outsPath)
-    filename = 'output.txt'
+    filename = 'outputs.txt'
     fout = open(outsPath + '/' + filename, 'w')
     for i in range(len(outLabels)):
         fout.write(outWords[i] + ' ' + outLabels[i] + ' ' + outPredictions[i] + '\n')
@@ -603,59 +706,147 @@ def TestRNN(model, dTest, lTest, wordDict, classDict):
 
     return accuracy
 
-def OutputEval(model, dataset, wordDict, posDict, neDict, propsDict):
+def OutputEval(model, dataset, wordDict, posDict, neDict, propsDict, maxLen):
+    '''
+    Eval the test result and convert result into the HW required form.
+    :param model: trained model.
+    :param dataset: 'train' or 'test'
+    :param wordDict: word dictionary.
+    :param posDict: POS dictionary.
+    :param neDict: NE dictionary.
+    :param propsDict: PROP dictionary.
+    :param maxLen: max sentence length.
+    :return: outputs - HW required form outputs.
+    '''
+    # delabel NE and PROPS.
+    def DeLabel(sentence, k):
+        '''
+        Decode the sentence in k-column.
+        :param sentence: input sentence.
+        :param k: process the k-column.
+        :return: processed sentence.
+        '''
+        # number of words.
+        numWords = len(sentence)
+        # get mark.
+        mark = np.zeros(numWords + 1)
+        for i in range(1, numWords):
+            if sentence[i][k] == sentence[i - 1][k]:
+                mark[i] = mark[i - 1]
+            else:
+                mark[i] = mark[i - 1] + 1
+        #print(mark)
+        # process.
+        for i in range(numWords):
+            if sentence[i][k] == '*':
+                continue
+            sign = '*'
+            if i == 0 or mark[i] != mark[i - 1]:
+                sign = '(' + sentence[i][k] + sign  # (_*
+            if i == numWords - 1 or mark[i] != mark[i + 1]:
+                sign = sign + ')'  # (_*) or *)
+            sentence[i][k] = sign
+        return sentence
+
     # input validation.
     if dataset.lower() not in ['train', 'valid', 'test']:
         print('[Error] Input invalid! [' + dataset + ']')
         return
 
     # load data set.
-    Sents = ReadData(dataset)
+    Sents, Targets = ReadData(dataset)
     numSents = len(Sents)
 
     # set model environment.
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
     model.eval()
+    torch.no_grad()
 
+    outputs = []
+    InvPropsDict = {ind: item for ind, item in enumerate(propsDict)}
+    #print(InvPropsDict)
     # for each sentence.
-    #for sent in Sents:
-    if 1:
-        sent = Sents[2]
-
-        ###
-        # dims = len(sent[0])
-        print(sent)
-
-        sentIndex = GetMapping([sent], wordDict, posDict, neDict, propsDict)
-        print(sentIndex)
-
+    for ind in range(numSents):
+        # get sentence and targets.
+        sent = Sents[ind]
+        targ = Targets[ind]
+        # print(sent)
+        # print(targ)
+        # get info.
+        length = len(sent)
+        dims = len(sent[0])
+        # pad the data
+        sentPad = PadData([sent], maxLen)
+        # map to index form.
+        sentIndex = GetMapping(sentPad, wordDict, posDict, neDict, propsDict)
+        # convert to model form.
         data, label = GetDataset(sentIndex)
-        print(data)
-        print(label)
+        #print(data)
+        #print(label)
 
+        # judge if there are verb targets.
         numTargets = len(data)
-        print(numTargets)
-
         if numTargets:
-            Tdata = torch.from_numpy(data).long().cuda()
-            Tlabel = torch.from_numpy(label).long().cuda()
-            print(Tdata)
-            print(Tlabel)
-            TDataset = torchdata.TensorDataset(Tdata, Tlabel)
-            TLoader = torchdata.DataLoader(TDataset, batch_size=256, shuffle=False)
-            print(TLoader)
-            with torch.no_grad():
-                for iter, (data, label) in enumerate(TLoader):
-                    print(data)
-                    print(label)
+            # run model.
+            x = torch.from_numpy(data).long().cuda()
+            y = torch.from_numpy(label).long().cuda()
+            #print(y)
+            x = x.to(device)
+            y = y.contiguous().view(-1)
+            y = y.to(device)
+            yhat = model.forward(x)  # get output
+            # statistic
+            preds = yhat.max(1)[1]
+            #print(preds)
+            predictions = preds.tolist()
+            predictions = np.reshape(predictions, (numTargets, -1))
+            predictions = predictions[:, :length]
+            #print(predictions)
+            torch.cuda.empty_cache()
+            # cat the targ.
+            for nTarget in range(numTargets):
+                for nWord in range(length):
+                    prop = predictions[nTarget][nWord]
+                    prop = InvPropsDict[prop]
+                    targ[nWord].append(prop)
         else:
             pass
+        outputs.append(targ)
+    #print(outputs)
 
+    # Delabel.
+    for out in outputs:
+        numProps = len(out[0]) - 1
+        #print(numProps)
+        if numProps:
+            for ind in range(1, 1 + numProps):
+                DeLabel(out, ind)
 
+    #print(outputs)
+    #out = outputs[0]
+    #df = pd.DataFrame(out)
+    #print(df)
 
+    # file operation.
+    if not os.path.exists(outsPath):
+        os.mkdir(outsPath)
+    filename = dataset.lower() + '_outputs.txt'
+    fout = open(outsPath + '/' + filename, 'w')
+    print('[Info] Outputs for testing are shown as follows:')
+    for out in outputs:
+        for word in out:
+            for item in word:
+                print('%-16s\t' % (item), end='')
+                fout.write('%-16s\t' % (item))
+            print('')
+            fout.write('\n')
+        print('')
+        fout.write('\n')
+    fout.close()
+    print('[Info] Outputs have been saved in ' + outsPath + '/' + filename)
 
-    return
+    return outputs
 
 if __name__ == '__main__':
     main()
