@@ -20,7 +20,58 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="settings.editor.selected.configurable" value="settings.github" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../AIT726_HW3/named_entity_recognition.py" />
+    <property name="settings.editor.selected.configurable" value="vcs.Git" />
+  </component>
+  <component name="RunManager" selected="Python.semantic_role_labeler">
+    <configuration name="BillyHW4" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="AIT726_HW4" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/BillyHW4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="semantic_role_labeler" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="AIT726_HW4" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/semantic_role_labeler.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.semantic_role_labeler" />
+        <item itemvalue="Python.BillyHW4" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -36,17 +87,66 @@
     <servers />
   </component>
   <component name="WindowStateProjectService">
-    <state x="739" y="297" key="FileChooserDialogImpl" timestamp="1587702765738">
-      <screen x="0" y="30" width="1920" height="1050" />
+    <state x="985" y="389" key="FileChooserDialogImpl" timestamp="1587841519056">
+      <screen x="0" y="30" width="2560" height="1410" />
     </state>
     <state x="739" y="297" key="FileChooserDialogImpl/0.30.1920.1050@0.30.1920.1050" timestamp="1587702765738" />
-    <state x="461" y="197" key="SettingsEditor" timestamp="1587702897067">
-      <screen x="0" y="30" width="1920" height="1050" />
+    <state x="985" y="389" key="FileChooserDialogImpl/0.30.2560.1410/2560.30.1920.1050@0.30.2560.1410" timestamp="1587841519056" />
+    <state width="2539" height="415" key="GridCell.Tab.0.bottom" timestamp="1587946806184">
+      <screen x="0" y="30" width="2560" height="1410" />
+    </state>
+    <state width="2539" height="415" key="GridCell.Tab.0.bottom/0.30.2560.1410/2560.30.1920.1050@0.30.2560.1410" timestamp="1587946806184" />
+    <state width="2539" height="415" key="GridCell.Tab.0.center" timestamp="1587946806183">
+      <screen x="0" y="30" width="2560" height="1410" />
+    </state>
+    <state width="2539" height="415" key="GridCell.Tab.0.center/0.30.2560.1410/2560.30.1920.1050@0.30.2560.1410" timestamp="1587946806183" />
+    <state width="2539" height="415" key="GridCell.Tab.0.left" timestamp="1587946806183">
+      <screen x="0" y="30" width="2560" height="1410" />
+    </state>
+    <state width="2539" height="415" key="GridCell.Tab.0.left/0.30.2560.1410/2560.30.1920.1050@0.30.2560.1410" timestamp="1587946806183" />
+    <state width="2539" height="415" key="GridCell.Tab.0.right" timestamp="1587946806183">
+      <screen x="0" y="30" width="2560" height="1410" />
+    </state>
+    <state width="2539" height="415" key="GridCell.Tab.0.right/0.30.2560.1410/2560.30.1920.1050@0.30.2560.1410" timestamp="1587946806183" />
+    <state width="1269" height="415" key="GridCell.Tab.1.bottom" timestamp="1587942974220">
+      <screen x="0" y="30" width="2560" height="1410" />
+    </state>
+    <state width="1269" height="415" key="GridCell.Tab.1.bottom/0.30.2560.1410/2560.30.1920.1050@0.30.2560.1410" timestamp="1587942974220" />
+    <state width="1269" height="415" key="GridCell.Tab.1.center" timestamp="1587942974220">
+      <screen x="0" y="30" width="2560" height="1410" />
+    </state>
+    <state width="1269" height="415" key="GridCell.Tab.1.center/0.30.2560.1410/2560.30.1920.1050@0.30.2560.1410" timestamp="1587942974220" />
+    <state width="1269" height="415" key="GridCell.Tab.1.left" timestamp="1587942974220">
+      <screen x="0" y="30" width="2560" height="1410" />
+    </state>
+    <state width="1269" height="415" key="GridCell.Tab.1.left/0.30.2560.1410/2560.30.1920.1050@0.30.2560.1410" timestamp="1587942974220" />
+    <state width="1269" height="415" key="GridCell.Tab.1.right" timestamp="1587942974220">
+      <screen x="0" y="30" width="2560" height="1410" />
+    </state>
+    <state width="1269" height="415" key="GridCell.Tab.1.right/0.30.2560.1410/2560.30.1920.1050@0.30.2560.1410" timestamp="1587942974220" />
+    <state x="615" y="254" key="SettingsEditor" timestamp="1587851212731">
+      <screen x="0" y="30" width="2560" height="1410" />
     </state>
     <state x="461" y="197" key="SettingsEditor/0.30.1920.1050@0.30.1920.1050" timestamp="1587702897067" />
+    <state x="615" y="254" key="SettingsEditor/0.30.2560.1410/2560.30.1920.1050@0.30.2560.1410" timestamp="1587851212731" />
     <state x="769" y="472" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1587702828644">
       <screen x="0" y="30" width="1920" height="1050" />
     </state>
     <state x="769" y="472" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.30.1920.1050@0.30.1920.1050" timestamp="1587702828644" />
+    <state x="1464" y="193" width="599" height="1137" key="dock-window-1" timestamp="1587841599669">
+      <screen x="0" y="30" width="2560" height="1410" />
+    </state>
+    <state x="1464" y="193" width="599" height="1137" key="dock-window-1/0.30.2560.1410/2560.30.1920.1050@0.30.2560.1410" timestamp="1587841599669" />
+    <state x="943" y="347" width="672" height="678" key="search.everywhere.popup" timestamp="1587841355677">
+      <screen x="0" y="30" width="2560" height="1410" />
+    </state>
+    <state x="943" y="347" width="672" height="678" key="search.everywhere.popup/0.30.2560.1410/2560.30.1920.1050@0.30.2560.1410" timestamp="1587841355677" />
+  </component>
+  <component name="XDebuggerManager">
+    <watches-manager>
+      <configuration name="PythonConfigurationType">
+        <watch expression="train_df" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>
